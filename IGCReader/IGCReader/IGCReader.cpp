@@ -727,6 +727,26 @@ double calcGPSDistance(double latitude_new, double longitude_new, double latitud
 	return distance;
 }
 
+double toDegrees(double radians) {
+	double degrees = radians * (180.0 / PI);
+	return degrees;
+}
+
+double toRadians(double degrees) {
+	double radians = degrees * PI / 180;
+	return radians;
+}
+
+double bearing(double lat1, double lng1, double lat2, double lng2)
+{
+	double dLon = (lng2 - lng1);
+	double y = sin(dLon) * cos(lat2);
+	double x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(dLon);
+	double brng = toDegrees((atan2(y, x)));
+	//brng = (360 - ((brng + 360) % 360));
+	return brng;
+}
+
 class Location {
 	double m_lat;
 	double m_long;
