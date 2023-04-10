@@ -691,12 +691,55 @@ public:
 	~FlightSummary() = default;
 };
 
+#include <cmath>
 
+#define PI 3.14159265358979323846
+#define RADIO_TERRESTRE 6372797.56085
+#define GRADOS_RADIANES PI / 180
+#define RADIANES_GRADOS 180 / PI
 
+/*
+Latitude - In an IGC file, this is a seven number group with two figures for degrees, two figures for minutes and three figures
+for tenths, hundredths and thousandths of minutes followed by the N or S character. For more precision and accuracy, the
+LAT code (Para A7) may be used
+
+Longitude - In an IGC file, this is an eight character numeric group expressed as three figures for degrees, two figures for
+minutes and three figures for tenths, hundredths and thousandths of minutes followed by the E or W character For more
+precision and accuracy, the LON code (Para A7) may be used
+*/
+
+double calcGPSDistance(double latitude_new, double longitude_new, double latitude_old, double longitude_old)
+{
+	double  lat_new = latitude_old * GRADOS_RADIANES;
+	double  lat_old = latitude_new * GRADOS_RADIANES;
+	double  lat_diff = (latitude_new - latitude_old) * GRADOS_RADIANES;
+	double  lng_diff = (longitude_new - longitude_old) * GRADOS_RADIANES;
+
+	double  a = sin(lat_diff / 2) * sin(lat_diff / 2) +
+		cos(lat_new) * cos(lat_old) *
+		sin(lng_diff / 2) * sin(lng_diff / 2);
+	double  c = 2 * atan2(sqrt(a), sqrt(1 - a));
+
+	double  distance = RADIO_TERRESTRE * c;
+
+	// std::cout <<__FILE__ << "." << __FUNCTION__ << " line:" << __LINE__ << "  "
+
+	return distance;
+}
+
+class Location {
+	double m_lat;
+	double m_long;
+public:
+	Location(double lat, double lon) : m_lat(lat), m_long(lon) {};
+};
 
 
 int main(int argc, char* argv[])
 {
+	double dist = calcGPSDistance(51.55069, 001.55616, 51.55068, 001.55616);
+	printf("Dist %f\n", dist);
+
 	if (argc < 2) {
 		return -1;
 	}
