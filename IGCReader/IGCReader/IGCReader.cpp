@@ -26,6 +26,8 @@ enum class RecordType : char {
 	G_Record = 'G', // - Security record(always last)
 };
 
+class FlightRecord;
+
 class Utils {
 public:
 	Utils() = default;
@@ -37,7 +39,7 @@ class IGCFile {
 public:
 	IGCFile() = default;
 	~IGCFile() = default;
-	bool read(const char* datafile);
+	bool read(const char* datafile, FlightRecord& FlightRecord);
 };
 
 class Split {
@@ -85,11 +87,13 @@ class A_Record {// - FR manufacturer and identification(always first)
 	static std::string m_uniqueID;			// Unique ID		3 bytes	NNN	Valid characters alphanumeric(AL3)
 	static std::string m_idExtension;		// ID extension	Optional	TEXT STRING	Valid characters alphanumeric
 public:
-	A_Record(const char* text);
 	A_Record() = default;
+	~A_Record() = default;
+	void parse(const char* text);
 	static std::string getManufacturer() { return m_manufacturer; };
 	static std::string getUniqueID() { return m_uniqueID; };
 	static std::string getIDExtension() { return m_idExtension; };
+	void print();
 };
 
 class H_Record {// - File header
@@ -114,8 +118,9 @@ class H_Record {// - File header
 
 	
 public:
-	H_Record(const char* text);
-	H_Record() = default;
+	H_Record() = default;;
+	~H_Record() = default;
+	void parse(const char* text);
 	static std::string getUTCDate() { return m_utcDate; };
 	static std::string getAccuracy() { return m_accuracy; };
 	static std::string getPilot() { return m_pilot; };
@@ -134,7 +139,7 @@ public:
 	static std::string getGNSSAltitude() { return m_gnssAltitude; };
 	static std::string getPressureMode() { return m_pressureMode; };
 	static std::string getTimeZone() { return m_timeZone; };
-
+	void print();
 };
 /*
 I record
@@ -162,31 +167,31 @@ public:
 class J_Record { // - Extension list of data in each K record line
 public:
 	J_Record(const char* text);
-	J_Record() = default;
+	~J_Record() = default;
 };
 
 class C_Record { // - Task / declaration(if used)
 public:
 	C_Record(const char* text);
-	C_Record() = default;
+	~C_Record() = default;
 };
 
 class L_Record { // - Logbook / comments(if used)
 public:
 	L_Record(const char* text);
-	L_Record() = default;
+	~L_Record() = default;
 };
 
 class D_Record { // - Differential GPS(if used)
 public:
 	D_Record(const char* text);
-	D_Record() = default;
+	~D_Record() = default;
 };
 
 class F_Record { // - Initial Satellite Constellation
 public:
 	F_Record(const char* text);
-	F_Record() = default;
+	~F_Record() = default;
 };
 
 class B_Record { // - Fix plus any extension data listed in I Record
@@ -212,19 +217,19 @@ public:
 class E_Record { // - Pilot Event(PEV)
 public:
 	E_Record(const char* text);
-	E_Record() = default;
+	~E_Record() = default;
 };
 
 class K_Record { // - Extension data as defined in J Record
 public:
 	K_Record(const char* text);
-	K_Record() = default;
+	~K_Record() = default;
 };
 
 class G_Record { // - Security record(always last)
 public:
 	G_Record(const char* text);
-	G_Record() = default;
+	~G_Record() = default;
 };
 
 /*
@@ -237,7 +242,7 @@ std::string A_Record::m_manufacturer;		// Manufacturer	3 bytes	MMM	Alphanumeric,
 std::string A_Record::m_uniqueID;			// Unique ID		3 bytes	NNN	Valid characters alphanumeric(AL3)
 std::string A_Record::m_idExtension;		// ID extension	Optional	TEXT STRING	Valid characters alphanumeric
 
-A_Record::A_Record(const char* text) {
+void A_Record::parse(const char* text) {
 	std::string rec = text;
 	std::string type = rec.substr(1, 3);
 	if (type.compare("MMM") == 0) {// Manufacturer
@@ -249,6 +254,12 @@ A_Record::A_Record(const char* text) {
 		return;
 	}
 	m_idExtension = rec.substr(1, rec.length() - 2);
+}
+
+void A_Record::print() {
+	if (getManufacturer().length() != 0) { printf("Manufacturer: %s\n", getManufacturer().c_str()); }
+	if (getUniqueID().length() != 0) { printf("UniqueID: %s\n", getUniqueID().c_str()); }
+	if (getIDExtension().length() != 0) { printf("IDExtension: %s\n", getIDExtension().c_str()); }
 }
 
 /*
@@ -327,7 +338,7 @@ std::string H_Record::m_gnssAltitude;
 std::string H_Record::m_pressureMode;
 std::string H_Record::m_timeZone;
 
-H_Record::H_Record(const char* text) {
+void H_Record::parse(const char* text) {
 	std::string rec = text;
 	std::string type = rec.substr(0, 5);
 	if (type.compare("HFDTE") == 0) {// UTC date this file was recorded
@@ -407,6 +418,28 @@ H_Record::H_Record(const char* text) {
 		return;
 	}
 
+}
+
+void H_Record::print()
+{
+	if (getUTCDate().length() != 0) { printf("UTC Date: %s\n", getUTCDate().c_str()); }
+	if (getAccuracy().length() != 0) { printf("Accuracy: %s\n", getAccuracy().c_str()); }
+	if (getPilot().length() != 0) { printf("Pilot: %s\n", getPilot().c_str()); }
+	if (getCopilot().length() != 0) { printf("Copilot: %s\n", getCopilot().c_str()); }
+	if (getGliderModel().length() != 0) { printf("Glider Model: %s\n", getGliderModel().c_str()); }
+	if (getGliderRegistration().length() != 0) { printf("Glider Registration: %s\n", getGliderRegistration().c_str()); }
+	if (getGPSDatum().length() != 0) { printf("GPS Datum: %s\n", getGPSDatum().c_str()); }
+	if (getFirmwareRevision().length() != 0) { printf("Firmware Revision: %s\n", getFirmwareRevision().c_str()); }
+	if (getHardwareRevision().length() != 0) { printf("Hardware Revision: %s\n", getHardwareRevision().c_str()); }
+	if (getManufacturerAndModel().length() != 0) { printf("Manufacturer and Model: %s\n", getManufacturerAndModel().c_str()); }
+	if (getGPSManufacturerAndModel().length() != 0) { printf("GPS Manufacturer and Model: %s\n", getGPSManufacturerAndModel().c_str()); }
+	if (getPressureSensor().length() != 0) { printf("Pressure Sensor: %s\n", getPressureSensor().c_str()); }
+	if (getGliderCompID().length() != 0) { printf("Glider Comp ID: %s\n", getGliderCompID().c_str()); }
+	if (getGliderCompClass().length() != 0) { printf("Glider Comp Class: %s\n", getGliderCompClass().c_str()); }
+	if (getDownloadSoftware().length() != 0) { printf("Download Software: %s\n", getDownloadSoftware().c_str()); }
+	if (getGNSSAltitude().length() != 0) { printf("GNSS Altitude: %s\n", getGNSSAltitude().c_str()); }
+	if (getPressureMode().length() != 0) { printf("Pressure Mode: %s\n", getPressureMode().c_str()); }
+	if (getTimeZone().length() != 0) { printf("Time Zone: %s\n", getTimeZone().c_str()); }
 }
 
 I_Record::I_Record(const char* text) {
@@ -527,13 +560,40 @@ class FlightRecord {
 	L record - Log book / comments
 	D record - Differential GPS
 	*/
-	std::vector <std::shared_ptr<B_Record>> m_bRecords{ nullptr };
+	std::vector<std::shared_ptr<B_Record>> m_bRecords;
 public:
-	FlightRecord() = default;
+	FlightRecord();
 	~FlightRecord() = default;
+	void print();
+	void setARecord(A_Record& rec) {
+		m_aRecord = std::make_shared<A_Record>(rec);
+	}
+	void setHRecord(H_Record& rec) {
+		m_hRecord = std::make_shared<H_Record>(rec);
+	}
+	void insertBRecord(B_Record& rec) {
+		m_bRecords.push_back(std::make_shared<B_Record>(rec));
+	}
 };
 
-bool IGCFile::read(const char* datafile) {
+FlightRecord::FlightRecord() {
+	
+	
+}
+
+void FlightRecord::print() {
+	printf("A_Record\n");
+	m_aRecord->print();
+	printf("H_Record\n");
+	m_hRecord->print();
+	printf("B_Record\n");
+	for (auto item : m_bRecords) {
+		item->print();
+	}
+
+}
+
+bool IGCFile::read(const char* datafile, FlightRecord& flightRecord) {
 	std::string text;
 
 	std::ifstream file(datafile);
@@ -541,15 +601,17 @@ bool IGCFile::read(const char* datafile) {
 		return false;
 	}
 	bool res = true;
+	H_Record hRecord;
+	A_Record aRecord;
 	while (std::getline(file, text)) {
 		char recordTypeChar = text[0];
-		printf("Record type: %c\n", recordTypeChar);
+		//printf("Record type: %c\n", recordTypeChar);
 		switch ((RecordType)recordTypeChar) {
 		case RecordType::A_Record: // - FR manufacturer and identification(always first)
-			A_Record aRecord(text.c_str());
+			aRecord.parse(text.c_str());
 			break;
 		case RecordType::H_Record: // - File header
-			H_Record hRecord(text.c_str());
+			hRecord.parse(text.c_str());
 			break;
 		case RecordType::I_Record: // - Fix extension list, of data added at end of each B record
 			break;
@@ -564,8 +626,11 @@ bool IGCFile::read(const char* datafile) {
 		case RecordType::F_Record: // - Initial Satellite Constellation
 			break;
 		case RecordType::B_Record: // - Fix plus any extension data listed in I Record
-			s_BRecords.push_back(std::make_shared<B_Record>(text.c_str()));
+		{
+			B_Record bRecord(text.c_str());
+			flightRecord.insertBRecord(bRecord);
 			break;
+		}
 		case RecordType::E_Record: // - Pilot Event(PEV)
 			break;
 		case RecordType::K_Record: // - Extension data as defined in J Record
@@ -574,6 +639,8 @@ bool IGCFile::read(const char* datafile) {
 			break;
 		}
 	}
+	flightRecord.setARecord(aRecord);
+	flightRecord.setHRecord(hRecord);
 	file.close();
 	return res;
 }
@@ -636,44 +703,13 @@ int main(int argc, char* argv[])
 	std::string path = argv[1];
 	printf("File: %s", argv[1]);
 	IGCFile IGCFile;
-	if (IGCFile.read(path.c_str()) == false)
+	FlightRecord flightRecord;
+	if (IGCFile.read(path.c_str(), flightRecord) == false)
 	{
 		return -1;
 	}
-
-	printf("A_Record\n");
+	flightRecord.print();
 	
-	if (A_Record::getManufacturer().length() != 0) { printf("Manufacturer: %s\n", A_Record::getManufacturer().c_str()); }
-	if (A_Record::getUniqueID().length() != 0) { printf("UniqueID: %s\n", A_Record::getUniqueID().c_str()); }
-	if (A_Record::getIDExtension().length() != 0) { printf("IDExtension: %s\n", A_Record::getIDExtension().c_str()); }
-
-	printf("H_Record\n");
-
-	if (H_Record::getUTCDate().length() != 0) { printf("UTC Date: %s\n", H_Record::getUTCDate().c_str()); }
-	if (H_Record::getAccuracy().length() != 0) { printf("Accuracy: %s\n", H_Record::getAccuracy().c_str()); }
-	if (H_Record::getPilot().length() != 0) { printf("Pilot: %s\n", H_Record::getPilot().c_str()); }
-	if (H_Record::getCopilot().length() != 0) { printf("Copilot: %s\n", H_Record::getCopilot().c_str()); }
-	if (H_Record::getGliderModel().length() != 0) { printf("Glider Model: %s\n", H_Record::getGliderModel().c_str()); }
-	if (H_Record::getGliderRegistration().length() != 0) { printf("Glider Registration: %s\n", H_Record::getGliderRegistration().c_str()); }
-	if (H_Record::getGPSDatum().length() != 0) { printf("GPS Datum: %s\n", H_Record::getGPSDatum().c_str()); }
-	if (H_Record::getFirmwareRevision().length() != 0) { printf("Firmware Revision: %s\n", H_Record::getFirmwareRevision().c_str()); }
-	if (H_Record::getHardwareRevision().length() != 0) { printf("Hardware Revision: %s\n", H_Record::getHardwareRevision().c_str()); }
-	if (H_Record::getManufacturerAndModel().length() != 0) { printf("Manufacturer and Model: %s\n", H_Record::getManufacturerAndModel().c_str()); }
-	if (H_Record::getGPSManufacturerAndModel().length() != 0) { printf("GPS Manufacturer and Model: %s\n", H_Record::getGPSManufacturerAndModel().c_str()); }
-	if (H_Record::getPressureSensor().length() != 0) { printf("Pressure Sensor: %s\n", H_Record::getPressureSensor().c_str()); }
-	if (H_Record::getGliderCompID().length() != 0) { printf("Glider Comp ID: %s\n", H_Record::getGliderCompID().c_str()); }
-	if (H_Record::getGliderCompClass().length() != 0) { printf("Glider Comp Class: %s\n", H_Record::getGliderCompClass().c_str()); }
-	if (H_Record::getDownloadSoftware().length() != 0) { printf("Download Software: %s\n", H_Record::getDownloadSoftware().c_str()); }
-	if (H_Record::getGNSSAltitude().length() != 0) { printf("GNSS Altitude: %s\n", H_Record::getGNSSAltitude().c_str()); }
-	if (H_Record::getPressureMode().length() != 0) { printf("Pressure Mode: %s\n", H_Record::getPressureMode().c_str()); }
-	if (H_Record::getTimeZone().length() != 0) { printf("Time Zone: %s\n", H_Record::getTimeZone().c_str()); }
-
-
-	printf("B_Record\n");
-
-	for (auto item : s_BRecords) {
-		item->print();
-	}
 }
 
 
