@@ -598,7 +598,7 @@ bool IGCFile::read(const char* datafile, FlightRecord& flightRecord) {
 
 	std::ifstream file(datafile);
 	if (file.is_open() == false) {
-		return false;
+return false;
 	}
 	bool res = true;
 	H_Record hRecord;
@@ -697,6 +697,12 @@ public:
 
 int main(int argc, char* argv[])
 {
+	if (argc < 2) {
+		return -1;
+	}
+	if (argv[1] == nullptr) {
+		return -1;
+	}
 	if (Utils::FileExists(argv[1]) == false) {
 		return -1;
 	}
